@@ -37,7 +37,7 @@ before_install:
 
 script:
 - docker-compose build --pull
-- docker tag client-connection-prod:latest elijahahianyo/trade-project:order-validator-prod
+- docker tag order-validator-prod:latest elijahahianyo/trade-project:order-validator-prod
 - docker image ls
 - docker push elijahahianyo/trade-project:order-validator-prod
 - echo "DOCKER_PASSWORD=$DOCKER_PASSWORD" > .env
