@@ -1,0 +1,61 @@
+language: java
+
+sudo: required
+
+dist: trusty
+
+jdk:
+  - openjdk15
+
+services:
+  - docker
+
+addons:
+  ssh_known_hosts:
+    - $EC2_PUBLIC_IP_ADDRESS
+env:
+  jobs: DOCKER_COMPOSE_VERSION=1.27.4
+  global:
+    secure: ZmhxWyKduRSuO/ZwNURW3Ct1j0nk68xkG5DbExt2cG5121ZycFY3rxJyhG97D887RWnSxjSUCypr7T3DDdglW2tZNWonvsRWbkofEotiFbOJMZH2r4GAG8oeSRhMgnpaM0tacBmBxai6BPn1rUAu2SzkKbihBB742B41hz6WhA0BjrAi1KQHpOyRQE2ZRWkU9xZNVp80gk1TFxWWiPCPxtWcFndukcznW8Y4EImHudfRgLRtxQgQjQcpp04VZiGYKoL1ogdPmBfO7KiUkGGX4Lp/JHCFsmPbVnXId994opxdh5wtYiQ0UfoYPZZzAoGeiUUVS1Kusk7qi66iDLq/tCABwC0qHMV6gI/c46QHdasmeX5fezBZQ9uBdcxsYQYTwQnN+dTVVqIv1JrtnUxDFqUcIEGEQWUM/LFrhQxtW9LLe87UvVPX45JooQVqizIuiL1SzbdtdazgXNu4/ESrKWUDG2Wcu8NcoF+VGEbvW5tiKTa09ao27VsNIZmjLN0bHEzfrCUC3gJhW0cTZMTlLLu43KjdI3ftJsUGxBoj5K9hDUNGcAELomHQlz0oenVVlxTZj70WdvCzOesIrRq9qaNbPZ7HG+2iJnDwWNTPfpg7VSXFkkS7uO806LCNTSyyB5Z1uq6oltb5aKO3td4iGgbNIfC3E15qrTxq2HAyM1Q=
+
+
+before_install:
+- openssl aes-256-cbc -K $encrypted_5791aa5564ed_key -iv $encrypted_5791aa5564ed_iv -in trade-project.pem.enc -out trade-project.pem -d
+- eval "$(ssh-agent -s)"
+- cp ./trade-project.pem ~/.ssh/id_rsa
+- chmod 600 ~/.ssh/id_rsa
+- ssh-add ~/.ssh/id_rsa
+- pip install --user awscli
+- chmod a+x mvnw
+- export PATH=$PATH:$HOME/.local/bin
+- sudo rm /usr/local/bin/docker-compose
+- curl -L https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-`uname
+  -s`-`uname -m` > docker-compose
+- chmod +x docker-compose
+- sudo mv docker-compose /usr/local/bin
+- echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+
+
+script:
+- docker-compose build --pull
+- docker tag client-connection-prod:latest elijahahianyo/trade-project:order-validator-prod
+- docker image ls
+- docker push elijahahianyo/trade-project:order-validator-prod
+- echo "DOCKER_PASSWORD=$DOCKER_PASSWORD" > .env
+- echo "DOCKER_USERNAME=$DOCKER_USERNAME" >> .env
+
+deploy:
+  - provider: script
+    skip_cleanup: true
+    script: bash deploy.sh
+    on:
+      branch: master
+#
+#after_success:
+#- eval "$(ssh-agent -s)"
+#- mkdir -p ~/.ssh
+#- echo "$SSH_KEY" | tr -d '\r' > ~/.ssh/id_rsa
+#- cat ~/.ssh/id_rsa
+#- chmod 600 ~/.ssh/id_rsa
+#- ssh-add ~/.ssh/id_rsa
+#- scp  -o StrictHostKeyChecking=no -r  ./docker-compose.yml ubuntu@$EC2_PUBLIC_IP_ADDRESS:/home/ubuntu/

@@ -1,0 +1,16 @@
+version: '2'
+services:
+  order-validator-prod:
+    container_name: order-validator-prod
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: order-validator-prod
+    ports:
+      - 47000:47000
+    networks:
+      - trade_project
+
+networks:
+  trade_project:
+    external: true
