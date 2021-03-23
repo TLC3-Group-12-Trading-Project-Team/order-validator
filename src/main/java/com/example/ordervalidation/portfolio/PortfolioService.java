@@ -64,6 +64,11 @@ public class PortfolioService {
         return portfolio;
     }
 
+    public Long getClientId(Long portfolioId){
+        Portfolio portfolio = portfolioRepository.findById(portfolioId).orElse(null);
+        return portfolio.getClient().getId();
+    }
+
 //    public Response updatePortfolio(Long id) {
 //        this.portfolioRepository.
 //    }

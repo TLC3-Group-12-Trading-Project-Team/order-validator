@@ -31,6 +31,10 @@ public class PortfolioController {
         return this.portfolioService.removePortfolio(id);
     }
 
+    @GetMapping(path = "client/{id}")
+    public Long getClientId(@PathVariable("id") Long id){
+        return this.portfolioService.getClientId(id);
+    }
 //    @PutMapping(path = "{id}")
 //    public Response update(@PathVariable("id") Long id){
 //        return this.portfolioService.updatePortfolio(id);

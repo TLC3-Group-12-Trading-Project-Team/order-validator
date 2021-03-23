@@ -5,10 +5,12 @@ import com.example.ordervalidation.clientorders.OrderResponse;
 import com.example.ordervalidation.order.OrderService;
 import com.example.ordervalidation.order.Orders;
 import com.example.ordervalidation.portfolio.PortfolioService;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 import redis.clients.jedis.Jedis;
 
 import java.time.LocalDateTime;
@@ -25,6 +27,12 @@ public class ClientOrdersService {
 
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
+    @Autowired
+    private RestTemplate restTemplate;
+
+
+    @Autowired
+    Environment env;
 
     @Autowired
     public ClientOrdersService(OrderService orderService, PortfolioService portfolioService){
@@ -35,8 +43,12 @@ public class ClientOrdersService {
     public OrderResponse checkOrderValidity(OrderRequest request) {
         OrderResponse response = new OrderResponse();
 
+        Long  clientId = this.portfolioService.getClientId((long) request.getPortfolioId());
+        String URL = "http://localhost:25000/client/balance/".concat(String.valueOf(clientId));
+        Double balance = restTemplate.getForObject(URL,Double.class);
+
         if(request.getSide().equals("BUY")){
-            if((request.getPrice()* request.getQuantity())>0){
+            if((request.getPrice()* request.getQuantity())<=balance){
                 Orders orders = new Orders();
                 orders.setStatus("OPEN");
                 orders.setSide(request.getSide());
