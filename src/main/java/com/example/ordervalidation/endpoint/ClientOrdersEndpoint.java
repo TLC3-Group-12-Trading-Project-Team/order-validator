@@ -3,6 +3,7 @@ package com.example.ordervalidation.endpoint;
 import com.example.ordervalidation.ClientOrdersService.ClientOrdersService;
 import com.example.ordervalidation.clientorders.OrderRequest;
 import com.example.ordervalidation.clientorders.OrderResponse;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.ws.server.endpoint.annotation.Endpoint;
 import org.springframework.ws.server.endpoint.annotation.PayloadRoot;
@@ -18,7 +19,7 @@ public class ClientOrdersEndpoint {
 
     @PayloadRoot(namespace = NAMESPACE, localPart = "OrderRequest")
     @ResponsePayload
-    public OrderResponse getOrderValidility(@RequestPayload OrderRequest request){
+    public OrderResponse getOrderValidility(@RequestPayload OrderRequest request) throws JsonProcessingException {
         return service.checkOrderValidity(request);
     }
 }
