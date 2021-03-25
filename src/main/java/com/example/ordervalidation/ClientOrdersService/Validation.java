@@ -12,13 +12,7 @@ public class Validation {
     }
 
     public boolean totalBuyLimit(int buylimit, int quantity) {
-        return (buylimit!=0 && buylimit <= quantity);
-    }
-
-    public Orders createOrder(){
-        Orders order = new Orders();
-
-        return order;
+        return (buylimit != 0 && buylimit <= quantity);
     }
 
     public Orders createOrder(String open, String side, String product, double price, int quantity, Portfolio portfolio) {
