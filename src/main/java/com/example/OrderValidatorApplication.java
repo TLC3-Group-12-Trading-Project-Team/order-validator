@@ -17,29 +17,11 @@ import org.springframework.web.client.RestTemplate;
 @ComponentScan(basePackages = "com.example.ordervalidation")
 public class OrderValidatorApplication {
 
-	@Autowired
-	private Environment env;
-
-	private static final String MARKETDATA = "/webhooks/market-data";
-
 	@Bean
 	private static RestTemplate restTemplate(RestTemplateBuilder builder) {
 		return builder.build();
 	}
 	public static void main(String[] args) {
 		SpringApplication.run(OrderValidatorApplication.class, args);
-	}
-
-	@Bean
-	public CommandLineRunner run(RestTemplate restTemplate) throws RestClientException {
-		return args -> {
-			// * Use a webhook
-			// subscribe to exchange
-			restTemplate.postForEntity(
-					"https://exchange.matraining.com/md/subscription",
-					env.getProperty("app.host").concat(MARKETDATA),
-					null
-			);
-		};
 	}
 }
