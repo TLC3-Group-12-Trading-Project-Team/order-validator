@@ -10,13 +10,10 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import redis.clients.jedis.Jedis;
-
-import java.time.LocalDateTime;
 
 
 @Service
@@ -59,6 +56,9 @@ public class ClientOrdersService {
                 .readValue(restTemplate.getForObject("https://exchange2.matraining.com/md/".concat(request.getProduct()), String.class),
                         ExchangeData.class);
         int buy_limit = marketData_1.getBUY_LIMIT() + marketData_2.getBUY_LIMIT();
+        double bidPrice = marketData_1.getBID_PRICE() + marketData_2.getBID_PRICE();
+        double max_shift_shift = marketData_1.getMAX_PRICE_SHIFT() + marketData_2.getMAX_PRICE_SHIFT();
+        double askPrice = marketData_1.getASK_PRICE() + marketData_2.getASK_PRICE();
         System.out.println(marketData_1 + " " + marketData_2);
 
 
@@ -66,17 +66,24 @@ public class ClientOrdersService {
             if (marketData_1 != null && marketData_2 != null) {
                 if (validation.clientBalance((request.getPrice() * request.getQuantity()), balance)) {
                     if (validation.totalBuyLimit((request.getQuantity()), buy_limit)) {
-                        Orders orders = validation.createOrder("OPEN", request.getSide(), request.getProduct(), request.getPrice(), request.getQuantity(), portfolioService.getPortfolio((long) request.getPortfolioId()));
+                        if (validation.buyPriceChecking(request.getPrice(), bidPrice, max_shift_shift)) {
+                            Orders orders = validation.createOrder("OPEN", request.getSide(), request.getProduct(), request.getPrice(), request.getQuantity(), portfolioService.getPortfolio((long) request.getPortfolioId()),request.getAction());
 
-                        orderService.createOrders(orders);
-                        response.setIsOrderValid(true);
-                        response.setMessage("Client order is valid");
-                        try {
-                            Jedis client = new Jedis("localhost", 6379);
-                            client.publish("orderValidation", objectMapper.writeValueAsString(orders));
-                        } catch (Exception e) {
-                            e.printStackTrace();
+                            orderService.createOrders(orders);
+                            response.setIsOrderValid(true);
+                            response.setMessage("Client order is valid");
+                            try {
+                                Jedis client = new Jedis("localhost", 6379);
+                                client.publish("orderValidation", objectMapper.writeValueAsString(orders));
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+
+                        } else {
+                            response.setIsOrderValid(false);
+                            response.setMessage("Recheck your price");
                         }
+
                     } else {
                         response.setIsOrderValid(false);
                         response.setMessage("The quantity is not enough to buy");
@@ -89,8 +96,35 @@ public class ClientOrdersService {
                 response.setIsOrderValid(false);
                 response.setMessage("market data is not available");
             }
-        } else if (request.getSide().equalsIgnoreCase("SELL")) {
+        }
+        if (request.getSide().equalsIgnoreCase("SELL")) {
+            if (marketData_1 != null && marketData_2 != null) {
+                if (request.getQuantity() < (marketData_1.getSELL_LIMIT() + marketData_2.getSELL_LIMIT())) {
+                    if (validation.sellPriceChecking(request.getPrice(), askPrice, max_shift_shift)) {
+                        Orders orders = validation.createOrder("OPEN", request.getSide(), request.getProduct(), request.getPrice(), request.getQuantity(), portfolioService.getPortfolio((long) request.getPortfolioId()), request.getAction());
 
+                        orderService.createOrders(orders);
+                        response.setIsOrderValid(true);
+                        response.setMessage("Client order is valid");
+                        try {
+                            Jedis client = new Jedis("localhost", 6379);
+                            client.publish("orderValidation", objectMapper.writeValueAsString(orders));
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    } else {
+                        response.setIsOrderValid(false);
+                        response.setMessage("Recheck your price");
+                    }
+                } else {
+                    response.setIsOrderValid(false);
+                    response.setMessage("Recheck your quantity");
+                }
+
+            } else {
+                response.setIsOrderValid(false);
+                response.setMessage("market data is not available");
+            }
         }
 
         return response;
