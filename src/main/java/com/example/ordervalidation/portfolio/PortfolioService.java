@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class PortfolioService {
@@ -26,14 +27,25 @@ public class PortfolioService {
     // Create a portfolio
     public ResponseData addPortfolio(Portfolio portfolio){
         List<Portfolio> portfolioList = this.portfolioRepository.findAll();
-        Client client = clientRepository.findClientByEmail(portfolio.getClientEmail()).get();
+        Optional<Client> client = clientRepository.findClientByEmail(portfolio.getClientEmail());
+        if (client.isEmpty()){
+            response.setCode(HttpStatus.BAD_REQUEST.value());
+            response.setStatus("No Client found");
+            HttpStatus.BAD_REQUEST.value();
+        }
         if (portfolio.getName().isEmpty()){
+            response.setCode(HttpStatus.BAD_REQUEST.value());
+            response.setStatus("Empty Portfolio Name");
+            HttpStatus.BAD_REQUEST.value();
             throw new IllegalStateException("Name cannot be null");
         }
         if (portfolioList.contains(portfolio.getName())){
+            response.setCode(HttpStatus.BAD_REQUEST.value());
+            response.setStatus("Portfolio Name Already Exist");
+            HttpStatus.BAD_REQUEST.value();
             throw new IllegalStateException("Portfolio Name Already Exist");
         }
-        portfolio.setClient(client);
+        portfolio.setClient(client.get());
         portfolio.setCreatedAt(LocalDateTime.now());
         this.portfolioRepository.save(portfolio);
         response.setCode(HttpStatus.OK.value());

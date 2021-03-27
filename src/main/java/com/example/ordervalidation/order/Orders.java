@@ -41,6 +41,8 @@ public class Orders {
 
     private String side;
 
+    private String action;
+
     @ManyToOne
     @JoinColumn(name="portfolio_id")
     @JsonBackReference
@@ -119,6 +121,14 @@ public class Orders {
 
     public void setPortfolio(Portfolio portfolio) {
         this.portfolio = portfolio;
+    }
+
+    public String getAction() {
+        return action;
+    }
+
+    public void setAction(String action) {
+        this.action = action;
     }
 
     public LocalDateTime getCreatedAt() {
