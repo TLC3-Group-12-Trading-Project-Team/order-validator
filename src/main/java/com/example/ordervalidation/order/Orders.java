@@ -54,7 +54,6 @@ public class Orders {
 
     public Orders() {
     }
-    private String action ;
     public Orders(Long id, String product, int quantity, Double price, String status, String side, Portfolio portfolio, LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = id;
         this.product = product;
