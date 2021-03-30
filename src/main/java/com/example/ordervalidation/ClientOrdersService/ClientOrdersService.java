@@ -10,14 +10,22 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import redis.clients.jedis.Jedis;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+
 
 @Service
 public class ClientOrdersService {
+
+    @Value("${baseURl}")
+    private String baseURL;
 
     @Autowired
     private final OrderService orderService;
@@ -44,8 +52,9 @@ public class ClientOrdersService {
         OrderResponse response = new OrderResponse();
         Validation validation = new Validation();
 
+
         Long clientId = this.portfolioService.getClientId((long) request.getPortfolioId());
-        String URL = "http://localhost:25000/client/balance/".concat(String.valueOf(clientId));
+        String URL = baseURL.concat("client/balance/").concat(String.valueOf(clientId));
         Double balance = restTemplate.getForObject(URL, Double.class);
 
         ExchangeData marketData_1 = objectMapper
@@ -67,13 +76,17 @@ public class ClientOrdersService {
                 if (validation.clientBalance((request.getPrice() * request.getQuantity()), balance)) {
                     if (validation.totalBuyLimit((request.getQuantity()), buy_limit)) {
                         if (validation.buyPriceChecking(request.getPrice(), bidPrice, max_shift_shift)) {
-                            Orders orders = validation.createOrder("OPEN", request.getSide(), request.getProduct(), request.getPrice(), request.getQuantity(), portfolioService.getPortfolio((long) request.getPortfolioId()),request.getAction());
+                            Orders orders = validation.createOrder("OPEN", request.getSide(), request.getProduct(), request.getPrice(), request.getQuantity(), portfolioService.getPortfolio((long) request.getPortfolioId()), request.getAction());
 
+                            double balanceUpdate = balance - (request.getPrice() * request.getQuantity());
+                            Map<String, Long> parameters = new HashMap<>();
+                            parameters.put("clientId", clientId);
+                            restTemplate.put(baseURL.concat("client/update-balance/{clientId}"), balanceUpdate, parameters);
                             orderService.createOrders(orders);
                             response.setIsOrderValid(true);
                             response.setMessage("Client order is valid");
                             try {
-                                Jedis client = new Jedis("localhost", 6379);
+                                Jedis client = new Jedis("172.25.0.2", 6379);
                                 client.publish("orderValidation", objectMapper.writeValueAsString(orders));
                             } catch (Exception e) {
                                 e.printStackTrace();
@@ -107,7 +120,7 @@ public class ClientOrdersService {
                         response.setIsOrderValid(true);
                         response.setMessage("Client order is valid");
                         try {
-                            Jedis client = new Jedis("localhost", 6379);
+                            Jedis client = new Jedis("172.25.0.2", 6379);
                             client.publish("orderValidation", objectMapper.writeValueAsString(orders));
                         } catch (Exception e) {
                             e.printStackTrace();
@@ -126,7 +139,6 @@ public class ClientOrdersService {
                 response.setMessage("market data is not available");
             }
         }
-
         return response;
     }
 
