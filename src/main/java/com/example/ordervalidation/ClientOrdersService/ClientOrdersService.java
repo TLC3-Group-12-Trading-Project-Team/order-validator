@@ -86,7 +86,7 @@ public class ClientOrdersService {
                             response.setIsOrderValid(true);
                             response.setMessage("Client order is valid");
                             try {
-                                Jedis client = new Jedis("localhost", 6379);
+                                Jedis client = new Jedis("172.25.0.2", 6379);
                                 client.publish("orderValidation", objectMapper.writeValueAsString(orders));
                             } catch (Exception e) {
                                 e.printStackTrace();
@@ -120,7 +120,7 @@ public class ClientOrdersService {
                         response.setIsOrderValid(true);
                         response.setMessage("Client order is valid");
                         try {
-                            Jedis client = new Jedis("localhost", 6379);
+                            Jedis client = new Jedis("172.25.0.2", 6379);
                             client.publish("orderValidation", objectMapper.writeValueAsString(orders));
                         } catch (Exception e) {
                             e.printStackTrace();
@@ -139,7 +139,6 @@ public class ClientOrdersService {
                 response.setMessage("market data is not available");
             }
         }
-
         return response;
     }
 
