@@ -52,7 +52,6 @@ public class ClientOrdersService {
         OrderResponse response = new OrderResponse();
         Validation validation = new Validation();
         ExchangeData marketData_1 = new ExchangeData();
-        ExchangeData marketData_2 = new ExchangeData();
         Long clientId = this.portfolioService.getClientId((long) request.getPortfolioId());
         String URL = baseURL.concat("client/balance/").concat(String.valueOf(clientId));
         Double balance = restTemplate.getForObject(URL, Double.class);
@@ -60,10 +59,6 @@ public class ClientOrdersService {
         try{
             marketData_1 = objectMapper
                     .readValue(restTemplate.getForObject("https://exchange.matraining.com/md/".concat(request.getProduct()), String.class),
-                            ExchangeData.class);
-
-            marketData_2 = objectMapper
-                    .readValue(restTemplate.getForObject("https://exchange2.matraining.com/md/".concat(request.getProduct()), String.class),
                             ExchangeData.class);
         }catch (JsonProcessingException  e){
             e.printStackTrace();
@@ -73,7 +68,7 @@ public class ClientOrdersService {
         double bidPrice = marketData_1.getBID_PRICE();
         double max_shift_shift = marketData_1.getMAX_PRICE_SHIFT();
         double askPrice = marketData_1.getASK_PRICE();
-        System.out.println(marketData_1 + " " + marketData_2);
+        System.out.println(marketData_1);
 
 
         if (request.getSide().equalsIgnoreCase("BUY")) {
@@ -114,7 +109,7 @@ public class ClientOrdersService {
                 response.setMessage("market data is not available");
             }
         if (request.getSide().equalsIgnoreCase("SELL")) {
-                if (request.getQuantity() < (marketData_1.getSELL_LIMIT() + marketData_2.getSELL_LIMIT())) {
+                if (request.getQuantity() < marketData_1.getSELL_LIMIT()) {
                     if (validation.sellPriceChecking(request.getPrice(), askPrice, max_shift_shift)) {
                         Orders orders = validation.createOrder("OPEN", request.getSide(), request.getProduct(), request.getPrice(), request.getQuantity(), portfolioService.getPortfolio((long) request.getPortfolioId()), request.getAction());
 
