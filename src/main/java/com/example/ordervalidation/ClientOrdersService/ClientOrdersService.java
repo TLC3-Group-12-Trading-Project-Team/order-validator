@@ -104,9 +104,6 @@ public class ClientOrdersService {
                     response.setIsOrderValid(false);
                     response.setMessage("Client balance insufficient for the order");
                 }
-            } else {
-                response.setIsOrderValid(false);
-                response.setMessage("market data is not available");
             }
         if (request.getSide().equalsIgnoreCase("SELL")) {
                 if (request.getQuantity() < marketData_1.getSELL_LIMIT()) {
@@ -131,9 +128,6 @@ public class ClientOrdersService {
                     response.setMessage("Recheck your quantity");
                 }
 
-            } else {
-                response.setIsOrderValid(false);
-                response.setMessage("market data is not available");
             }
         return response;
     }
