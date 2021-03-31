@@ -69,10 +69,10 @@ public class ClientOrdersService {
             e.printStackTrace();
         }
 
-        int buy_limit = marketData_1.getBUY_LIMIT() + marketData_2.getBUY_LIMIT();
-        double bidPrice = marketData_1.getBID_PRICE() + marketData_2.getBID_PRICE();
-        double max_shift_shift = marketData_1.getMAX_PRICE_SHIFT() + marketData_2.getMAX_PRICE_SHIFT();
-        double askPrice = marketData_1.getASK_PRICE() + marketData_2.getASK_PRICE();
+        int buy_limit = marketData_1.getBUY_LIMIT();
+        double bidPrice = marketData_1.getBID_PRICE();
+        double max_shift_shift = marketData_1.getMAX_PRICE_SHIFT();
+        double askPrice = marketData_1.getASK_PRICE();
         System.out.println(marketData_1 + " " + marketData_2);
 
 

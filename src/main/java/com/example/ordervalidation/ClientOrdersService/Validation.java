@@ -32,10 +32,10 @@ public class Validation {
         return order;
     }
     public Boolean buyPriceChecking(double price, double bidPrice, double max_price_shift) {
-        return (price < (bidPrice + max_price_shift)/2 && price > (bidPrice - max_price_shift)/2 );
+        return (price < (bidPrice + max_price_shift) && price > (bidPrice - max_price_shift) );
     }
 
     public Boolean sellPriceChecking(double price, double askPrice, double max_price_shift) {
-        return (price < (askPrice + max_price_shift)/2 && price > (askPrice - max_price_shift)/2 );
+        return (price < (askPrice + max_price_shift) && price > (askPrice - max_price_shift));
     }
 }
