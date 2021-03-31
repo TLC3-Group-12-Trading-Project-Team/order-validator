@@ -48,22 +48,27 @@ public class ClientOrdersService {
         this.portfolioService = portfolioService;
     }
 
-    public OrderResponse checkOrderValidity(OrderRequest request) throws JsonProcessingException {
+    public OrderResponse checkOrderValidity(OrderRequest request) {
         OrderResponse response = new OrderResponse();
         Validation validation = new Validation();
-
-
+        ExchangeData marketData_1 = new ExchangeData();
+        ExchangeData marketData_2 = new ExchangeData();
         Long clientId = this.portfolioService.getClientId((long) request.getPortfolioId());
         String URL = baseURL.concat("client/balance/").concat(String.valueOf(clientId));
         Double balance = restTemplate.getForObject(URL, Double.class);
 
-        ExchangeData marketData_1 = objectMapper
-                .readValue(restTemplate.getForObject("https://exchange.matraining.com/md/".concat(request.getProduct()), String.class),
-                        ExchangeData.class);
+        try{
+            marketData_1 = objectMapper
+                    .readValue(restTemplate.getForObject("https://exchange.matraining.com/md/".concat(request.getProduct()), String.class),
+                            ExchangeData.class);
 
-        ExchangeData marketData_2 = objectMapper
-                .readValue(restTemplate.getForObject("https://exchange2.matraining.com/md/".concat(request.getProduct()), String.class),
-                        ExchangeData.class);
+            marketData_2 = objectMapper
+                    .readValue(restTemplate.getForObject("https://exchange2.matraining.com/md/".concat(request.getProduct()), String.class),
+                            ExchangeData.class);
+        }catch (JsonProcessingException  e){
+            e.printStackTrace();
+        }
+
         int buy_limit = marketData_1.getBUY_LIMIT() + marketData_2.getBUY_LIMIT();
         double bidPrice = marketData_1.getBID_PRICE() + marketData_2.getBID_PRICE();
         double max_shift_shift = marketData_1.getMAX_PRICE_SHIFT() + marketData_2.getMAX_PRICE_SHIFT();
@@ -72,7 +77,6 @@ public class ClientOrdersService {
 
 
         if (request.getSide().equalsIgnoreCase("BUY")) {
-            if (marketData_1 != null && marketData_2 != null) {
                 if (validation.clientBalance((request.getPrice() * request.getQuantity()), balance)) {
                     if (validation.totalBuyLimit((request.getQuantity()), buy_limit)) {
                         if (validation.buyPriceChecking(request.getPrice(), bidPrice, max_shift_shift)) {
@@ -109,9 +113,7 @@ public class ClientOrdersService {
                 response.setIsOrderValid(false);
                 response.setMessage("market data is not available");
             }
-        }
         if (request.getSide().equalsIgnoreCase("SELL")) {
-            if (marketData_1 != null && marketData_2 != null) {
                 if (request.getQuantity() < (marketData_1.getSELL_LIMIT() + marketData_2.getSELL_LIMIT())) {
                     if (validation.sellPriceChecking(request.getPrice(), askPrice, max_shift_shift)) {
                         Orders orders = validation.createOrder("OPEN", request.getSide(), request.getProduct(), request.getPrice(), request.getQuantity(), portfolioService.getPortfolio((long) request.getPortfolioId()), request.getAction());
@@ -138,7 +140,6 @@ public class ClientOrdersService {
                 response.setIsOrderValid(false);
                 response.setMessage("market data is not available");
             }
-        }
         return response;
     }
 
